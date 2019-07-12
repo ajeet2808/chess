@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Green.Chess.Pieces;
+using Green.Collections;
 
 namespace Green.Chess
 {
@@ -37,25 +38,49 @@ namespace Green.Chess
             UpdateDisplay();
         }
 
+        private IPriorityQueue<MoveCommand> GetValidMoves(Color color)
+        {
+            var moves = new PriorityQueue<MoveCommand>();
+            foreach (var piece in Pieces[color])
+            {
+                var validMoves = GetValidMoves(piece);
+                if (validMoves.Count > 0)
+                {
+                    moves.Enqueue(validMoves);
+                }
+            }
+            return moves;
+        }
+
+        private List<MoveCommand> GetValidMoves(Piece piece)
+        {
+            var moves = piece.GetReachableSquares(Board).Where(sq => !IsKingInCheckOnMove(piece, sq)).Select(sq => new MoveCommand(piece, sq)).ToList();
+            return moves;
+        }
 
         public void Play()
         {
             var count = 0;
-            Board.Pieces[Turn].ForEach(p => p.PopulateReachableSquares(Board));
-            do
+            UpdateGameStatus();
+            while (GameStatus == GameStatus.InPlay)
             {
                 if (Turn == Color.White)
                 {
                     count++;
                 }
-                var moveCommand = Players[Turn].GetMoveCommand(Board, count);
-                
+                Console.WriteLine($"{Players[Turn].Name}'s move ({count}): ");
+                Console.ReadKey();
+                var moves = GetValidMoves(Turn);
+                var moveCommand = Players[Turn].GetMoveCommand(moves, count);
+
                 var move = MakeMove(Board, moveCommand.Piece, moveCommand.Destination);
                 Turn = Turn.GetOpponentColor();
-                Board.Pieces[Turn].ForEach(p => p.PopulateReachableSquares(Board));
+                var pieces = Board.Pieces[Turn].Where(x => x.CurrentPosition == null).ToList();
+                var pieces2 = Board.Pieces[Turn.GetOpponentColor()].Where(x => x.CurrentPosition == null).ToList();
+                //Board.Pieces[Turn].ForEach(p => p.PopulateReachableSquares(Board));
                 UpdateGameStatus();
                 UpdateDisplay();
-            } while (GameStatus == GameStatus.InPlay);
+            };
             switch (GameStatus)
             {
                 case GameStatus.Draw:
@@ -74,23 +99,17 @@ namespace Green.Chess
 
         private GameStatus UpdateGameStatus()
         {
-            if (IsCheckMate())
+            var validMoves = GetValidMoves(Turn);
+            var moveablePiece = validMoves.Count > 0 ? validMoves.Peek().Piece : null;
+            if (moveablePiece == null)
             {
-                GameStatus = GameStatus.CheckMate;
+                GameStatus = IsKingInCheck(Turn) ? GameStatus.CheckMate : GameStatus.Draw;
             }
-
-            if (InSufficientMaterials())
+            else if (InSufficientMaterials())
             {
                 GameStatus = GameStatus.Draw;
             }
-
             return GameStatus;
-        }
-
-        public bool IsCheckMate()
-        {
-            var moveablePiece = Board.Pieces[Turn].FirstOrDefault(p => p.ReachableSquares.Count > 0);
-            return moveablePiece == null && Board.IsKingInCheck(Turn);
         }
 
         public bool InSufficientMaterials()
@@ -118,8 +137,10 @@ namespace Green.Chess
             move.From = new Square(piece.CurrentPosition.Rank, piece.CurrentPosition.Column);
             move.To = new Square(destination.Rank, destination.Column);
             move.CapturedPiece = destination.Piece;
-
-            RemovePiece(destination.Piece);
+            if (destination.IsOccupied)
+            {
+                RemovePiece(destination.Piece);
+            }
             destination.Place(piece.CurrentPosition.Pick());
             if (IsPromotionalMove(piece, destination))
             {
@@ -130,20 +151,68 @@ namespace Green.Chess
             return move;
         }
 
-        //public void UndoMove(Move move)
-        //{
-        //    //var from = Board.GetSquare(move.From.Rank, move.From.Column);
-        //    //var to = Board.GetSquare(move.To.Rank, move.To.Column);
-        //    //var captured = move.CapturedPiece;
-        //    //var piece = to.Pick();
-        //}
-
-        private void RemovePiece(Piece piece)
+        public IReadOnlyDictionary<int, Square> GetAttackingSquares(Color color)
         {
-            if (piece != null)
+            var map = new Dictionary<int, Square>();
+            foreach (var piece in Pieces[color])
             {
-                Pieces[piece.Color].Remove(Board.RemovePiece(piece));
+                foreach (var square in piece.GetAttackableSquares(Board))
+                {
+                    map.TryAdd(square.Id, square);
+                }
             }
+            return map;
+        }
+
+        public bool IsKingInCheck(Color color)
+        {
+            var kingsPosition = Pieces[color].Single(p => p is King).CurrentPosition;
+            var opponentAttackingSquares = GetAttackingSquares(color.GetOpponentColor());
+            var isInCheck = opponentAttackingSquares.ContainsKey(kingsPosition.Id);
+            return isInCheck;
+        }
+
+        public bool IsKingInCheckOnMove(Piece piece, Square destination)
+        {
+            var isKingInCheckOnMove = false;
+            var currentSquare = piece.CurrentPosition;
+            Piece capturedPiece = null;
+            if (destination.IsOccupied)
+            {
+                capturedPiece = RemovePiece(destination.Piece);
+            }
+
+            piece = piece.CurrentPosition.Pick();
+            try
+            {
+                destination.Place(piece);
+                isKingInCheckOnMove = IsKingInCheck(piece.Color);
+            }
+            finally
+            {
+                piece = destination.Pick();
+                currentSquare.Place(piece);
+                if (capturedPiece != null)
+                {
+                    AddPiece(capturedPiece, destination);
+                }
+            }
+            return isKingInCheckOnMove;
+        }
+
+
+        private Piece RemovePiece(Piece piece)
+        {
+            if (piece == null) throw new InvalidOperationException("cannot remove null piece");
+            piece = Board.RemovePiece(piece);
+            Pieces[piece.Color].Remove(piece);
+            return piece;
+        }
+
+        private void AddPiece(Piece piece, Square destination)
+        {
+            Pieces[piece.Color].Add(piece);
+            destination.Place(piece);
         }
     }
     public enum GameStatus

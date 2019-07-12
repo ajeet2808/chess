@@ -7,7 +7,7 @@ namespace Green.Chess.Pieces
 {
     public class Knight : Piece
     {
-        public Knight(Color color) : base(color)
+        public Knight(Color color, int number) : base(color, PieceType.Knight, 3, number)
         {
         }
 
@@ -62,7 +62,7 @@ namespace Green.Chess.Pieces
 
             rank = CurrentPosition.Rank - 1;
             column = CurrentPosition.Column + 2;
-            if (rank >= Board.RANK_MAX)
+            if (rank >= Board.RANK_MIN)
             {
                 if (column <= Board.COLUMN_MAX)
                 {
@@ -80,7 +80,7 @@ namespace Green.Chess.Pieces
         public override List<Square> GetReachableSquares(Board board)
         {
             var attackingSquares = GetAttackableSquares(board);
-            var validDestinationSquares = attackingSquares.Where(sq => (!sq.IsOccupied || sq.Piece.Color != Color) && !board.IsKingInCheckOnMove(this, sq)).ToList();
+            var validDestinationSquares = attackingSquares.Where(sq => (!sq.IsOccupied || sq.Piece.Color != Color)).ToList();
             return validDestinationSquares;
         }
         public override string ToString()

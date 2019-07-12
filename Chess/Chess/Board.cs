@@ -164,47 +164,8 @@ namespace Green.Chess
             }
         }
 
-        public IReadOnlyDictionary<int, Square> GetAttackingSquares(Color color)
-        {
-            var map = new Dictionary<int, Square>();
-            foreach (var piece in Pieces[color])
-            {
-                foreach (var square in piece.GetAttackableSquares(this))
-                {
-                    map.TryAdd(square.Id, square);
-                }
-            }
-            return map;
-        }
-
-        public bool IsKingInCheck(Color color)
-        {
-            var kingsPosition = Pieces[color].Single(p => p is King).CurrentPosition;
-            var opponentAttackingSquares = GetAttackingSquares(color.GetOpponentColor());
-            var isInCheck = opponentAttackingSquares.ContainsKey(kingsPosition.Id);
-            return isInCheck;
-        }
-
-        public bool IsKingInCheckOnMove(Piece piece, Square destination)
-        {
-            var isKingInCheckOnMove = false;
-            var currentSquare = piece.CurrentPosition;
-            var capturedPiece = destination.Pick();
-            piece = piece.CurrentPosition.Pick();
-            try
-            {
-                destination.Place(piece);
-                isKingInCheckOnMove = IsKingInCheck(piece.Color);
-            }
-            finally
-            {
-                piece = destination.Pick();
-                currentSquare.Place(piece);
-                destination.Place(capturedPiece);
-            }
-            return isKingInCheckOnMove;
-        }
-
+       
+        
         public int GetPromotionRank(Color color) => color == Color.White ? RANK_MAX : RANK_MIN;
 
         public static class Ranks

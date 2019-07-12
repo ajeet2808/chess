@@ -21,9 +21,28 @@ namespace Green.Chess.Pieces
             [PieceType.King] = typeof(King),
         };
 
-        public static Piece CreatePiece<T>(Color color) where T : Piece => Activator.CreateInstance(typeof(T), color) as Piece;
-
-        public static Piece CreatePiece(Color color, PieceType pieceType) => Activator.CreateInstance(_pieceClassByType[pieceType], color) as Piece;
+        private static IDictionary<(Color, PieceType), int> _pieceCounter = new Dictionary<(Color, PieceType), int>()
+        {
+            [(Color.White, PieceType.Pawn)] = 0,
+            [(Color.White, PieceType.Rook)] = 0,
+            [(Color.White, PieceType.Knight)] = 0,
+            [(Color.White, PieceType.Bishop)] = 0,
+            [(Color.White, PieceType.Queen)] = 0,
+            [(Color.White, PieceType.King)] = 0,
+            [(Color.Black, PieceType.Pawn)] = 0,
+            [(Color.Black, PieceType.Rook)] = 0,
+            [(Color.Black, PieceType.Knight)] = 0,
+            [(Color.Black, PieceType.Bishop)] = 0,
+            [(Color.Black, PieceType.Queen)] = 0,
+            [(Color.Black, PieceType.King)] = 0,
+        };
+        
+        public static Piece CreatePiece(Color color, PieceType type)
+        {
+            var key = (color, type);
+            _pieceCounter[key]++;
+            return Activator.CreateInstance(_pieceClassByType[type], color, _pieceCounter[key]) as Piece;
+        }
 
 
         public static IReadOnlyDictionary<Color, List<Piece>> CreatePieces()
@@ -34,20 +53,20 @@ namespace Green.Chess.Pieces
                 var pieces = new List<Piece>();
                 for (int i = 0; i < 8; i++)
                 {
-                    pieces.Add(CreatePiece<Pawn>(color));
+                    pieces.Add(CreatePiece(color, PieceType.Pawn));
                 }
 
                 for (int i = 0; i < 2; i++)
                 {
-                    pieces.Add(CreatePiece<Rook>(color));
+                    pieces.Add(CreatePiece(color, PieceType.Rook));
 
-                    pieces.Add(CreatePiece<Knight>(color));
+                    pieces.Add(CreatePiece(color, PieceType.Knight));
 
-                    pieces.Add(CreatePiece<Bishop>(color));
+                    pieces.Add(CreatePiece(color, PieceType.Bishop));
                 }
 
-                pieces.Add(CreatePiece<King>(color));
-                pieces.Add(CreatePiece<Queen>(color));
+                pieces.Add(CreatePiece(color, PieceType.King));
+                pieces.Add(CreatePiece(color, PieceType.Queen));
 
                 piecesByColor.Add(color, pieces);
             }

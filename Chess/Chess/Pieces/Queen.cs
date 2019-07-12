@@ -7,7 +7,7 @@ namespace Green.Chess.Pieces
 {
     public class Queen : Piece
     {
-        public Queen(Color color) : base(color)
+        public Queen(Color color, int number) : base(color, PieceType.Queen, 9, number)
         {
         }
 
@@ -30,7 +30,7 @@ namespace Green.Chess.Pieces
         public override List<Square> GetReachableSquares(Board board)
         {
             var attackingSquares = GetAttackableSquares(board);
-            var validDestinationSquares = attackingSquares.Where(sq => (!sq.IsOccupied || sq.Piece.Color != Color) && !board.IsKingInCheckOnMove(this, sq)).ToList();
+            var validDestinationSquares = attackingSquares.Where(sq => (!sq.IsOccupied || sq.Piece.Color != Color)).ToList();
             return validDestinationSquares;
         }
 

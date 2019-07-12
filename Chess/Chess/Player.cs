@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Green.Chess.Pieces;
+using Green.Collections;
 
 namespace Green.Chess
 {
@@ -16,12 +17,10 @@ namespace Green.Chess
         public Color Color { get; }
         public string Name { get; }
 
-        public MoveCommand GetMoveCommand(Board board,int moveCount)
+        public MoveCommand GetMoveCommand(IPriorityQueue<MoveCommand> validMoves, int moveCount)
         {
-            Console.WriteLine($"{Name}'s move ({moveCount}): ");
-            Console.ReadKey();
-            var moveablePiece = board.Pieces[Color].FirstOrDefault(p => p.ReachableSquares.Count > 0);
-            return new MoveCommand(moveablePiece, moveablePiece.ReachableSquares.First());
+            var moveCommand = validMoves.Peek();
+            return moveCommand;
         }
 
         public PieceType GetPromotedToPiece()
