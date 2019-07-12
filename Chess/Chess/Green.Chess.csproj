@@ -7,4 +7,8 @@
     <RootNamespace>Green.Chess</RootNamespace>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Collections\Green.Collections.csproj" />
+  </ItemGroup>
+
 </Project>

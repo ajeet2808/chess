@@ -5,7 +5,7 @@ namespace Green.Chess.Pieces
 {
     public class Pawn : Piece
     {
-        public Pawn(Color color) : base(color)
+        public Pawn(Color color, int number) : base(color, PieceType.Pawn, 1, number)
         {
         }
         private int MarchDirection => Color == Color.Black ? -1 : +1;
@@ -66,7 +66,7 @@ namespace Green.Chess.Pieces
                     validDestinationSquares.Add(square);
                 }
             }
-            validDestinationSquares = validDestinationSquares.Where(sq => !board.IsKingInCheckOnMove(this, sq)).ToList();
+            //validDestinationSquares = validDestinationSquares.Where(sq => !IsKingInCheckOnMove(this, sq)).ToList();
             return validDestinationSquares;
         }
 

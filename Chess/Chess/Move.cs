@@ -21,14 +21,4 @@ namespace Green.Chess
 
         public bool IsDoublePawnPush => Piece is Pawn && (To.Rank - From.Rank) * (Piece.Color == Color.White ? +1 : -1) == 2;
     }
-    public class MoveCommand
-    {
-        public MoveCommand(Piece piece, Square destination)
-        {
-            Piece = piece;
-            Destination = destination;
-        }
-        public Piece Piece { get; set; }
-        public Square Destination { get; set; }
-    }
 }
